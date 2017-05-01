@@ -3,6 +3,9 @@ from __future__ import print_function
 __author__ = "shekkizh"
 
 import tensorflow as tf
+tfconfig = tf.ConfigProto(allow_soft_placement=True)
+tfconfig.gpu_options.allow_growth=True
+
 import numpy as np
 import os, sys, inspect
 import time
@@ -13,24 +16,23 @@ if utils_folder not in sys.path:
     sys.path.insert(0, utils_folder)
 
 import utils as utils
-import Dataset_Reader.read_celebADataset as celebA
+import Dataset_Reader.read_celebADataset as celeA
 from six.moves import xrange
 
 
 class GAN(object):
     def __init__(self, z_dim, crop_image_size, resized_image_size, batch_size, data_dir):
-        celebA_dataset = celebA.read_dataset(data_dir)
+        local_dataset = celeA.read_local_data(data_dir)
         self.z_dim = z_dim
         self.crop_image_size = crop_image_size
         self.resized_image_size = resized_image_size
         self.batch_size = batch_size
-        filename_queue = tf.train.string_input_producer(celebA_dataset.train_images)
+        filename_queue = tf.train.string_input_producer(local_dataset["train"])
         self.images = self._read_input_queue(filename_queue)
 
     def _read_input(self, filename_queue):
         class DataRecord(object):
             pass
-
         reader = tf.WholeFileReader()
         key, value = reader.read(filename_queue)
         record = DataRecord()
@@ -41,10 +43,7 @@ class GAN(object):
         # resized_image = tf.image.resize_bilinear(decoded_image_4d, [self.target_image_size, self.target_image_size])
         # record.input_image = tf.squeeze(resized_image, squeeze_dims=[0])
 
-        cropped_image = tf.cast(
-            tf.image.crop_to_bounding_box(decoded_image, 55, 35, self.crop_image_size, self.crop_image_size),
-            tf.float32)
-        decoded_image_4d = tf.expand_dims(cropped_image, 0)
+        decoded_image_4d = tf.expand_dims(decoded_image, 0)
         resized_image = tf.image.resize_bilinear(decoded_image_4d, [self.resized_image_size, self.resized_image_size])
         record.input_image = tf.squeeze(resized_image, squeeze_dims=[0])
         return record
@@ -80,7 +79,7 @@ class GAN(object):
                 image_size *= 2
                 W = utils.weight_variable([5, 5, dims[index + 1], dims[index]], name="W_%d" % index)
                 b = utils.bias_variable([dims[index + 1]], name="b_%d" % index)
-                deconv_shape = tf.pack([tf.shape(h)[0], image_size, image_size, dims[index + 1]])
+                deconv_shape = tf.stack([tf.shape(h)[0], image_size, image_size, dims[index + 1]])
                 h_conv_t = utils.conv2d_transpose_strided(h, W, b, output_shape=deconv_shape)
                 h_bn = utils.batch_norm(h_conv_t, dims[index + 1], train_phase, scope="gen_bn%d" % index)
                 h = activation(h_bn, name='h_%d' % index)
@@ -89,7 +88,7 @@ class GAN(object):
             image_size *= 2
             W_pred = utils.weight_variable([5, 5, dims[-1], dims[-2]], name="W_pred")
             b_pred = utils.bias_variable([dims[-1]], name="b_pred")
-            deconv_shape = tf.pack([tf.shape(h)[0], image_size, image_size, dims[-1]])
+	    deconv_shape = tf.stack([tf.shape(h)[0], image_size, image_size, dims[-1]])
             h_conv_t = utils.conv2d_transpose_strided(h, W_pred, b_pred, output_shape=deconv_shape)
             pred_image = tf.nn.tanh(h_conv_t, name='pred_image')
             utils.add_activation_summary(pred_image)
@@ -171,11 +170,11 @@ class GAN(object):
                        optimizer_param=0.9, improved_gan_loss=True):
         print("Setting up model...")
         self._setup_placeholder()
-        tf.histogram_summary("z", self.z_vec)
+        tf.summary.histogram("z", self.z_vec)
         self.gen_images = self._generator(self.z_vec, generator_dims, self.train_phase, scope_name="generator")
 
-        tf.image_summary("image_real", self.images, max_images=2)
-        tf.image_summary("image_generated", self.gen_images, max_images=2)
+        tf.summary.image("image_real", self.images, max_outputs=2)
+        tf.summary.image("image_generated", self.gen_images, max_outputs=2)
 
         def leaky_relu(x, name="leaky_relu"):
             return utils.leaky_relu(x, alpha=0.2, name=name)
@@ -217,7 +216,7 @@ class GAN(object):
     def initialize_network(self, logs_dir):
         print("Initializing network...")
         self.logs_dir = logs_dir
-        self.sess = tf.Session()
+        self.sess = tf.Session(config=tfconfig)
         self.summary_op = tf.merge_all_summaries()
         self.saver = tf.train.Saver()
         self.summary_writer = tf.train.SummaryWriter(self.logs_dir, self.sess.graph)
@@ -290,7 +289,7 @@ class WasserstienGAN(GAN):
                 image_size *= 2
                 W = utils.weight_variable([4, 4, dims[index + 1], dims[index]], name="W_%d" % index)
                 b = tf.zeros([dims[index + 1]])
-                deconv_shape = tf.pack([tf.shape(h)[0], image_size, image_size, dims[index + 1]])
+                deconv_shape = tf.stack([tf.shape(h)[0], image_size, image_size, dims[index + 1]])
                 h_conv_t = utils.conv2d_transpose_strided(h, W, b, output_shape=deconv_shape)
                 h_bn = utils.batch_norm(h_conv_t, dims[index + 1], train_phase, scope="gen_bn%d" % index)
                 h = activation(h_bn, name='h_%d' % index)
@@ -299,7 +298,7 @@ class WasserstienGAN(GAN):
             image_size *= 2
             W_pred = utils.weight_variable([4, 4, dims[-1], dims[-2]], name="W_pred")
             b = tf.zeros([dims[-1]])
-            deconv_shape = tf.pack([tf.shape(h)[0], image_size, image_size, dims[-1]])
+            deconv_shape = tf.stack([tf.shape(h)[0], image_size, image_size, dims[-1]])
             h_conv_t = utils.conv2d_transpose_strided(h, W_pred, b, output_shape=deconv_shape)
             pred_image = tf.nn.tanh(h_conv_t, name='pred_image')
             utils.add_activation_summary(pred_image)

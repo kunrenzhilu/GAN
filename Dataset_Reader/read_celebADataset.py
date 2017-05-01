@@ -16,11 +16,31 @@ DATA_URL = 'https://www.dropbox.com/sh/8oqt9vytwxb3s4r/AADIKlz8PR9zr6Y20qbkunrba
 random.seed(5)
 
 
-class CelebA_Dataset():
+class Dataset_Reader():
     def __init__(self, dict):
         self.train_images = dict['train']
         self.test_images = dict['test']
         self.validation_images = dict['validation']
+
+def read_local_data(data_dir, validation_percentage = 0.0, testing_percentage = 0.0):
+    for x in os.walk(data_dir):
+        file_list = x[2]
+    training_images = [data_dir+x for x in file_list]    
+
+    random.shuffle(training_images)
+    no_of_images = len(training_images)
+    validation_offset = int(validation_percentage * no_of_images)
+    validation_images = training_images[:validation_offset]
+    test_offset = int(testing_percentage * no_of_images)
+    testing_images = training_images[validation_offset:validation_offset + test_offset]
+    training_images = training_images[validation_offset + test_offset:]
+
+    result = {
+        'train': training_images,
+        'test': testing_images,
+        'validation': validation_images,
+        }
+    return result
 
 
 def read_dataset(data_dir):
