@@ -16,18 +16,18 @@ if utils_folder not in sys.path:
     sys.path.insert(0, utils_folder)
 
 import utils as utils
-import Dataset_Reader.read_celebADataset as celeA
+import Dataset_Reader.read_celebADataset as celebA
 from six.moves import xrange
 
 
 class GAN(object):
     def __init__(self, z_dim, crop_image_size, resized_image_size, batch_size, data_dir):
-        local_dataset = celeA.read_local_data(data_dir)
+        local_dataset = celebA.read_local_data(data_dir)
         self.z_dim = z_dim
         self.crop_image_size = crop_image_size
         self.resized_image_size = resized_image_size
         self.batch_size = batch_size
-        filename_queue = tf.train.string_input_producer(local_dataset["train"])
+        filename_queue = tf.train.string_input_producer(local_dataset['train'])
         self.images = self._read_input_queue(filename_queue)
 
     def _read_input(self, filename_queue):
@@ -88,7 +88,7 @@ class GAN(object):
             image_size *= 2
             W_pred = utils.weight_variable([5, 5, dims[-1], dims[-2]], name="W_pred")
             b_pred = utils.bias_variable([dims[-1]], name="b_pred")
-	    deconv_shape = tf.stack([tf.shape(h)[0], image_size, image_size, dims[-1]])
+            deconv_shape = tf.stack([tf.shape(h)[0], image_size, image_size, dims[-1]])
             h_conv_t = utils.conv2d_transpose_strided(h, W_pred, b_pred, output_shape=deconv_shape)
             pred_image = tf.nn.tanh(h_conv_t, name='pred_image')
             utils.add_activation_summary(pred_image)
@@ -126,7 +126,7 @@ class GAN(object):
 
     def _cross_entropy_loss(self, logits, labels, name="x_entropy"):
         xentropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits, labels))
-        tf.scalar_summary(name, xentropy)
+        tf.summary.scalar(name, xentropy)
         return xentropy
 
     def _get_optimizer(self, optimizer_name, learning_rate, optimizer_param):
@@ -163,8 +163,8 @@ class GAN(object):
             gen_loss_features = 0
         self.gen_loss = gen_loss_disc + 0.1 * gen_loss_features
 
-        tf.scalar_summary("Discriminator_loss", self.discriminator_loss)
-        tf.scalar_summary("Generator_loss", self.gen_loss)
+        tf.summary.scalar("Discriminator_loss", self.discriminator_loss)
+        tf.summary.scalar("Generator_loss", self.gen_loss)
 
     def create_network(self, generator_dims, discriminator_dims, optimizer="Adam", learning_rate=2e-4,
                        optimizer_param=0.9, improved_gan_loss=True):
@@ -216,12 +216,12 @@ class GAN(object):
     def initialize_network(self, logs_dir):
         print("Initializing network...")
         self.logs_dir = logs_dir
-        self.sess = tf.Session(config=tfconfig)
-        self.summary_op = tf.merge_all_summaries()
+        self.sess = tf.Session()
+        self.summary_op = tf.summary.merge_all()
         self.saver = tf.train.Saver()
-        self.summary_writer = tf.train.SummaryWriter(self.logs_dir, self.sess.graph)
+        self.summary_writer = tf.summary.FileWriter(self.logs_dir, self.sess.graph)
 
-        self.sess.run(tf.initialize_all_variables())
+        self.sess.run(tf.global_variables_initializer())
         ckpt = tf.train.get_checkpoint_state(self.logs_dir)
         if ckpt and ckpt.model_checkpoint_path:
             self.saver.restore(self.sess, ckpt.model_checkpoint_path)
@@ -334,8 +334,8 @@ class WasserstienGAN(GAN):
         self.discriminator_loss = tf.reduce_mean(logits_real - logits_fake)
         self.gen_loss = tf.reduce_mean(logits_fake)
 
-        tf.scalar_summary("Discriminator_loss", self.discriminator_loss)
-        tf.scalar_summary("Generator_loss", self.gen_loss)
+        tf.summary.scalar("Discriminator_loss", self.discriminator_loss)
+        tf.summary.scalar("Generator_loss", self.gen_loss)
 
     def train_model(self, max_iterations):
         try:
