@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # WassersteinGAN.tensorflow
 Tensorflow implementation of Arjovsky et al.'s [Wasserstein GAN](https://arxiv.org/abs/1701.07875)
 
@@ -73,3 +74,6 @@ Given that neural networks are generally continuous w.r.t to its parameters, the
 ## References and related links
 - Pytorch implementation of WasserstienGAN by authors of the paper - [link](https://github.com/martinarjovsky/WassersteinGAN)
 - Interesting discussion on r/machinelearning - [link](https://www.reddit.com/r/MachineLearning/comments/5qxoaz/r_170107875_wasserstein_gan/)
+=======
+# GAM
+>>>>>>> 5abe84ac9d7e4254a83270fc336707a8b133292e
