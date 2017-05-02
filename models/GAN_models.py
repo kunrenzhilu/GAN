@@ -216,7 +216,7 @@ class GAN(object):
     def initialize_network(self, logs_dir):
         print("Initializing network...")
         self.logs_dir = logs_dir
-        self.sess = tf.Session()
+        self.sess = tf.Session(config=tfconfig)
         self.summary_op = tf.summary.merge_all()
         self.saver = tf.train.Saver()
         self.summary_writer = tf.summary.FileWriter(self.logs_dir, self.sess.graph)
