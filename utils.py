@@ -7,12 +7,12 @@ import os, sys
 from six.moves import urllib
 import tarfile
 import zipfile
+import cPickle as pickle
 from tqdm import trange
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
-
 def maybe_download_and_extract(dir_path, url_name, is_tarfile=False, is_zipfile=False):
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
@@ -181,6 +181,7 @@ def save_imshow_grid(images, logs_dir, filename, shape):
     """
     Plot images in a grid of a given shape.
     """
+    pickle.dump(images, open("image.pk", "wb"))
     fig = plt.figure(1)
     grid = ImageGrid(fig, 111, nrows_ncols=shape, axes_pad=0.05)
 
