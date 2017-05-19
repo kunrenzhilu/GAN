@@ -21,7 +21,9 @@ class Dataset_Reader():
         self.train_images = dict['train']
         self.test_images = dict['test']
         self.validation_images = dict['validation']
-
+""" This is used to train on local genereated data, slightly modify the original to fit our image format
+    __author__ = 'kun ouyang'
+"""
 def read_local_data(data_dir, validation_percentage = 0.0, testing_percentage = 0.0):
     for x in os.walk(data_dir):
         file_list = x[2]

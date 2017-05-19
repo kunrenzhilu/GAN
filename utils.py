@@ -12,7 +12,9 @@ from tqdm import trange
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from PIL import Image
 from mpl_toolkits.axes_grid1 import ImageGrid
+log_dir = 'logs/log_100000'
 def maybe_download_and_extract(dir_path, url_name, is_tarfile=False, is_zipfile=False):
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
@@ -181,7 +183,7 @@ def save_imshow_grid(images, logs_dir, filename, shape):
     """
     Plot images in a grid of a given shape.
     """
-    pickle.dump(images, open("image.pk", "wb"))
+    pickle.dump(images, open(os.path.join(logs_dir, "image.pk"), "wb"))
     fig = plt.figure(1)
     grid = ImageGrid(fig, 111, nrows_ncols=shape, axes_pad=0.05)
 
@@ -189,5 +191,6 @@ def save_imshow_grid(images, logs_dir, filename, shape):
     for i in trange(size, desc="Saving images"):
         grid[i].axis('off')
         grid[i].imshow(images[i])
+	Image.fromarray(images[i]).save(os.path.join(logs_dir,str(i)),"jpeg")
 
     plt.savefig(os.path.join(logs_dir, filename))
