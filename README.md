@@ -1,4 +1,12 @@
 <<<<<<< HEAD
+# ADDED BY KUN
+use run_main.py to run the program and use test_main.py to generate synthetic maps
+The training data is stored under ./image/ however this directory is put under .gitignore
+The generated picture will be put in /log/YOU_LOG_DIR
+# ADDED BY KUN
+
+
+
 # WassersteinGAN.tensorflow
 Tensorflow implementation of Arjovsky et al.'s [Wasserstein GAN](https://arxiv.org/abs/1701.07875)
 
