@@ -25,7 +25,10 @@ tf.flags.DEFINE_string("mode", "train", "train / visualize model")
 
 def main(argv=None):
     gen_dim = FLAGS.gen_dimension
+    #The generation process is deconv process.
     generator_dims = [64 * gen_dim, 64 * gen_dim // 2, 64 * gen_dim // 4, 64 * gen_dim // 8, 3]
+    #The dimension of each layer, 3 is the first since it's 3 channels, 1 is the 
+    #last since it's flattened in the end to be one-hot. 
     discriminator_dims = [3, 64, 64 * 2, 64 * 4, 64 * 8, 1]
 
     crop_image_size, resized_image_size = map(int, FLAGS.image_size.split(','))
