@@ -9,9 +9,10 @@ import tensorflow as tf
 from models.GAN_models import *
 
 FLAGS = tf.flags.FLAGS
+tf.flags.DEFINE_string("cp_tobe", "30000", "checkpoint-to-be-recover")
 tf.flags.DEFINE_integer("batch_size", "64", "batch size for training")
 tf.flags.DEFINE_string("logs_dir", "logs/log_100000/", "path to logs directory")
-tf.flags.DEFINE_string("data_dir", "/home/data/images/", "path to dataset")
+tf.flags.DEFINE_string("data_dir", "images/", "path to dataset")
 tf.flags.DEFINE_integer("z_dim", "100", "size of input vector to generator")
 tf.flags.DEFINE_float("learning_rate", "2e-4", "Learning rate for Adam Optimizer")
 tf.flags.DEFINE_float("optimizer_param", "0.5", "beta1 for Adam optimizer / decay for RMSProp")
@@ -43,7 +44,7 @@ def main(argv=None):
     model.create_network(generator_dims, discriminator_dims, FLAGS.optimizer, FLAGS.learning_rate,
                          FLAGS.optimizer_param)
 
-    model.initialize_network(FLAGS.logs_dir)
+    model.initialize_network(FLAGS.logs_dir, FLAGS.cp_tobe)
 
     if FLAGS.mode == "train":
         model.train_model(int(1 + FLAGS.iterations))

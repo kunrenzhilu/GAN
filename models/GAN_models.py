@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 __author__ = "shekkizh"
-
+import csv
 import tensorflow as tf
 tfconfig = tf.ConfigProto(allow_soft_placement=True)
 tfconfig.gpu_options.allow_growth=True
@@ -114,7 +114,6 @@ class GAN(object):
                     h_bn = utils.batch_norm(h_conv, dims[index + 1], train_phase, scope="disc_bn%d" % index)
                 h = activation(h_bn, name="h_%d" % index)
                 utils.add_activation_summary(h)
-
             shape = h.get_shape().as_list()
             image_size = self.resized_image_size // (2 ** (N - 2))  # dims has input dim and output dim
             h_reshaped = tf.reshape(h, [self.batch_size, image_size * image_size * shape[3]])
@@ -213,7 +212,7 @@ class GAN(object):
         self.generator_train_op = self._train(self.gen_loss, self.generator_variables, optim)
         self.discriminator_train_op = self._train(self.discriminator_loss, self.discriminator_variables, optim)
 
-    def initialize_network(self, logs_dir):
+    def initialize_network(self, logs_dir, cp_tobe):
         print("Initializing network...")
         self.logs_dir = logs_dir
         self.sess = tf.Session(config=tfconfig)
@@ -222,9 +221,18 @@ class GAN(object):
         self.summary_writer = tf.summary.FileWriter(self.logs_dir, self.sess.graph)
 
         self.sess.run(tf.global_variables_initializer())
+        """
+        find the checkpoint index by cp_tobe to recover
+        """
         ckpt = tf.train.get_checkpoint_state(self.logs_dir)
         if ckpt and ckpt.model_checkpoint_path:
-            self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+            paths = ckpt.all_model_checkpoint_paths
+            for p in paths:
+                if str(p).find(cp_tobe)>-1:
+                    recover_path = p
+            print("Checkpoint to be recovered: ", recover_path)
+
+            self.saver.restore(self.sess, recover_path)
             print("Model restored...")
         self.coord = tf.train.Coordinator()
         self.threads = tf.train.start_queue_runners(self.sess, self.coord)
@@ -331,6 +339,8 @@ class WasserstienGAN(GAN):
         return None, h_pred, None  # Return the last convolution output. None values are returned to maintatin disc from other GAN
 
     def _gan_loss(self, logits_real, logits_fake, feature_real, feature_fake, use_features=False):
+        # The lost function is different from DCGAN
+        # reduce_mean is compute the mean so as to reduce the dimension.
         self.discriminator_loss = tf.reduce_mean(logits_real - logits_fake)
         self.gen_loss = tf.reduce_mean(logits_fake)
 
@@ -350,6 +360,8 @@ class WasserstienGAN(GAN):
                 feed_dict = {self.z_vec: batch_z, self.train_phase: train_phase}
                 return feed_dict
 
+            rec_g_loss = []
+            rec_d_loss = []
             for itr in xrange(1, max_iterations):
                 if itr < 25 or itr % 500 == 0:
                     critic_itrs = 25
@@ -366,17 +378,27 @@ class WasserstienGAN(GAN):
                 if itr % 100 == 0:
                     summary_str = self.sess.run(self.summary_op, feed_dict=feed_dict)
                     self.summary_writer.add_summary(summary_str, itr)
-
+                    
                 if itr % 200 == 0:
                     stop_time = time.time()
                     duration = (stop_time - start_time) / 200.0
                     start_time = stop_time
                     g_loss_val, d_loss_val = self.sess.run([self.gen_loss, self.discriminator_loss],
                                                            feed_dict=feed_dict)
+                    
+                    rec_g_loss.append(g_loss_val)
+                    rec_d_loss.append(d_loss_val)
                     print("Time: %g/itr, Step: %d, generator loss: %g, discriminator_loss: %g" % (
                         duration, itr, g_loss_val, d_loss_val))
 
                 if itr % 5000 == 0:
+                    with open(self.logs_dir+'/loss.csv','a+') as f:
+                        writer = csv.writer(f)
+                        record = zip(rec_g_loss, rec_d_loss)
+                        for row in record:
+                            writer.writerow(row)
+                    rec_g_loss = []
+                    rec_d_loss = []
                     self.saver.save(self.sess, self.logs_dir + "model.ckpt", global_step=itr)
 
         except tf.errors.OutOfRangeError:

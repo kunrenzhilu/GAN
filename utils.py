@@ -191,6 +191,7 @@ def save_imshow_grid(images, logs_dir, filename, shape):
     for i in trange(size, desc="Saving images"):
         grid[i].axis('off')
         grid[i].imshow(images[i])
-	Image.fromarray(images[i]).save(os.path.join(logs_dir,str(i)),"jpeg")
+        im = Image.fromarray(images[i])
+        im.save(os.path.join(logs_dir, 'gen_images', str(i)+'.jpeg'))
 
     plt.savefig(os.path.join(logs_dir, filename))

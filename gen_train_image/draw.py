@@ -1,4 +1,6 @@
-from tkinter import *
+import matplotlib
+matplotlib.use('Agg')
+from Tkinter import *
 from PIL import Image, ImageDraw, ImageOps
 import random
 import os
@@ -84,7 +86,7 @@ def draw_to_centre(image, init_x, init_y, index):
     if check(next2_x, next2_y):
         i = index[int(init_x / line_dis)][int(init_y / line_dis)]
         index[int(init_x / line_dis)][int(init_y / line_dis)] += 1;
-        prefix = "images/" + str(int(init_x)).zfill(2) + str(int(init_y)).zfill(2) + "y" + str(i)
+        prefix = "../images/" + str(int(init_x)).zfill(2) + str(int(init_y)).zfill(2) + "y" + str(i)
         image.save(prefix + "a" + ".jpeg")
         a2 = Image.open(prefix + "a" + ".jpeg")
         draw2 = ImageDraw.Draw(a2)
