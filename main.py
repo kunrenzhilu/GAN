@@ -10,7 +10,7 @@ from models.GAN_models import *
 
 FLAGS = tf.flags.FLAGS
 tf.flags.DEFINE_string("cp_tobe", "30000", "checkpoint-to-be-recover")
-tf.flags.DEFINE_integer("batch_size", "64", "batch size for training")
+tf.flags.DEFINE_integer("batch_size", "200", "batch size for training")
 tf.flags.DEFINE_string("logs_dir", "logs/log_100000/", "path to logs directory")
 tf.flags.DEFINE_string("data_dir", "images/", "path to dataset")
 tf.flags.DEFINE_integer("z_dim", "100", "size of input vector to generator")
