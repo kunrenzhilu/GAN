@@ -1,10 +1,11 @@
-import matplotlib
-matplotlib.use('Agg')
-from Tkinter import *
+from tkinter import *
+
+import PIL
 from PIL import Image, ImageDraw, ImageOps
 import random
 import os
 import math
+import numpy as np
 import sys
 import time
 import copy
@@ -57,6 +58,7 @@ def generate():
     init_y = canvas_width / 2
     index = [[0 for x in range(math.ceil((row_num + 1) / 2))] for y in range(math.ceil((row_num + 1) / 2))]
     draw_to_centre(image1, init_x, init_y, index)
+    distort()
 
 
 # all the paths end at the centre, though they are in fact extended from the centre
@@ -66,7 +68,7 @@ def draw_to_centre(image, init_x, init_y, index):
     next1_y = init_y
     if check(next1_x, next1_y):
         i = index[int(init_x / line_dis)][int(init_y / line_dis)]
-        index[int(init_x // line_dis)][int(init_y / line_dis)] += 1;
+        index[int(init_x / line_dis)][int(init_y / line_dis)] += 1;
         prefix = "images/" + str(int(init_x)).zfill(2) + str(int(init_y)).zfill(2) + "x" + str(i)
         image.save(prefix + "a" + ".jpeg")
         a1 = Image.open(prefix + "a" + ".jpeg")
@@ -86,7 +88,7 @@ def draw_to_centre(image, init_x, init_y, index):
     if check(next2_x, next2_y):
         i = index[int(init_x / line_dis)][int(init_y / line_dis)]
         index[int(init_x / line_dis)][int(init_y / line_dis)] += 1;
-        prefix = "../images/" + str(int(init_x)).zfill(2) + str(int(init_y)).zfill(2) + "y" + str(i)
+        prefix = "images/" + str(int(init_x)).zfill(2) + str(int(init_y)).zfill(2) + "y" + str(i)
         image.save(prefix + "a" + ".jpeg")
         a2 = Image.open(prefix + "a" + ".jpeg")
         draw2 = ImageDraw.Draw(a2)
@@ -100,6 +102,32 @@ def draw_to_centre(image, init_x, init_y, index):
         d2.save(prefix + "d" + ".jpeg")
         draw_to_centre(a2, next2_x, next2_y, index)
 
+
+def distort():
+    for fn in os.listdir("images/"):
+        for i in range(0, 10):
+            im = Image.open("images/" + fn)
+            if bool(random.getrandbits(1)):
+                x, y = random.randint(canvas_width / 4, canvas_width * 3/4), \
+                       random.randint(canvas_height / 4, canvas_height * 3/4)
+                im = im.rotate(random.randint(-15, 15), resample=PIL.Image.BILINEAR, center=[x, y])
+            else:
+                data = np.array(im)
+                if bool(random.getrandbits(1)):
+                    r0, g0, b0 = rgb_red
+                    r1, g1, b1 = random.randint(0, 128), random.randint(0, 255), random.randint(0, 255)
+                else:
+                    r0, g0, b0 = rgb_blk
+                    r1, g1, b1 = random.randint(10, 255), random.randint(10, 255), random.randint(10, 255)
+
+                red, green, blue = data[:, :, 0], data[:, :, 1], data[:, :, 2]
+                mask = (red == r0) & (green == g0) & (blue == b0)
+                data[:, :, :3][mask] = [r1, g1, b1]
+                im = Image.fromarray(data)
+
+            im.save("images/d" + str(distort.counter) + ".jpeg")
+            distort.counter += 1
+distort.counter = 0
 
 if __name__ == "__main__":
     master = Tk()
@@ -116,18 +144,18 @@ if __name__ == "__main__":
     canvas_height = 64 + start_point
     row_num = canvas_height // line_dis
 
-    w = Canvas(master,
-               width=canvas_width,
-               height=canvas_height)
-    w.pack()
+    # w = Canvas(master,
+    #            width=canvas_width,
+    #            height=canvas_height)
+    # w.pack()
 
     image1 = Image.new("RGB", (canvas_width, canvas_height), (255, 255, 255))
     draw = ImageDraw.Draw(image1)
     for x in range(start_point, canvas_width + 1, line_dis):
-        w.create_line(x, start_point, x, canvas_height, fill="#476042")
+        # w.create_line(x, start_point, x, canvas_height, fill="#476042")
         draw.line([x - start_point, start_point - start_point, x - start_point, canvas_height - start_point], rgb_blk)
     for y in range(start_point, canvas_height + 1, line_dis):
-        w.create_line(start_point, y, canvas_width, y, fill="#476042")
+        # w.create_line(start_point, y, canvas_width, y, fill="#476042")
         draw.line([start_point - start_point, y - start_point, canvas_width - start_point, y - start_point], rgb_blk)
 
     generate()
