@@ -70,17 +70,17 @@ def draw_to_centre(image, init_x, init_y, index):
         i = index[int(init_x / line_dis)][int(init_y / line_dis)]
         index[int(init_x / line_dis)][int(init_y / line_dis)] += 1;
         prefix = "images/" + str(int(init_x)).zfill(2) + str(int(init_y)).zfill(2) + "x" + str(i)
-        image.save(prefix + "a" + ".jpeg")
-        a1 = Image.open(prefix + "a" + ".jpeg")
+        image.save(prefix + "a" + ".png")
+        a1 = Image.open(prefix + "a" + ".png")
         draw1 = ImageDraw.Draw(a1)
         draw1.line([init_x, init_y, next1_x, next1_y], rgb_red, width=bold_width)
-        a1.save(prefix + "a" + ".jpeg")
+        a1.save(prefix + "a" + ".png")
         b1 = ImageOps.mirror(a1)
-        b1.save(prefix + "b" + ".jpeg")
+        b1.save(prefix + "b" + ".png")
         c1 = ImageOps.flip(a1)
-        c1.save(prefix + "c" + ".jpeg")
+        c1.save(prefix + "c" + ".png")
         d1 = ImageOps.flip(b1)
-        d1.save(prefix + "d" + ".jpeg")
+        d1.save(prefix + "d" + ".png")
         draw_to_centre(a1, next1_x, next1_y, index)
 
     next2_x = init_x
@@ -89,17 +89,17 @@ def draw_to_centre(image, init_x, init_y, index):
         i = index[int(init_x / line_dis)][int(init_y / line_dis)]
         index[int(init_x / line_dis)][int(init_y / line_dis)] += 1;
         prefix = "images/" + str(int(init_x)).zfill(2) + str(int(init_y)).zfill(2) + "y" + str(i)
-        image.save(prefix + "a" + ".jpeg")
-        a2 = Image.open(prefix + "a" + ".jpeg")
+        image.save(prefix + "a" + ".png")
+        a2 = Image.open(prefix + "a" + ".png")
         draw2 = ImageDraw.Draw(a2)
         draw2.line([init_x, init_y, next2_x, next2_y], rgb_red, width=bold_width)
-        a2.save(prefix + "a" + ".jpeg")
+        a2.save(prefix + "a" + ".png")
         b2 = ImageOps.mirror(a2)
-        b2.save(prefix + "b" + ".jpeg")
+        b2.save(prefix + "b" + ".png")
         c2 = ImageOps.flip(a2)
-        c2.save(prefix + "c" + ".jpeg")
+        c2.save(prefix + "c" + ".png")
         d2 = ImageOps.flip(b2)
-        d2.save(prefix + "d" + ".jpeg")
+        d2.save(prefix + "d" + ".png")
         draw_to_centre(a2, next2_x, next2_y, index)
 
 
@@ -125,7 +125,7 @@ def distort():
                 data[:, :, :3][mask] = [r1, g1, b1]
                 im = Image.fromarray(data)
 
-            im.save("images/d" + str(distort.counter) + ".jpeg")
+            im.save("images/d" + str(distort.counter) + ".png")
             distort.counter += 1
 distort.counter = 0
 
