@@ -25,13 +25,13 @@ if len(DATA_DIR) == 0:
     raise Exception('Please specify path to data directory in gan_64x64.py!')
 
 MODE = 'wgan-gp' # dcgan, wgan, wgan-gp, lsgan
-DIM = 16 # Model dimensionality
+DIM = 64 # Model dimensionality
 CRITIC_ITERS = 5 # How many iterations to train the critic for
 N_GPUS = 1 # Number of GPUs
-BATCH_SIZE = 32 # Batch size. Must be a multiple of N_GPUS
-ITERS = 200#000 # How many iterations to train for
+BATCH_SIZE = 64 # Batch size. Must be a multiple of N_GPUS
+ITERS = 20000 # How many iterations to train for
 LAMBDA = 10 # Gradient penalty lambda hyperparameter
-OUTPUT_DIM = 64*64*3 # Number of pixels in each iamge
+OUTPUT_DIM = 64*64*3 # Number of pixels in each image
 
 lib.print_model_settings(locals().copy())
 
@@ -182,16 +182,16 @@ def ResidualBlock(name, input_dim, output_dim, filter_size, inputs, resample=Non
     if output_dim==input_dim and resample==None:
         shortcut = inputs # Identity skip-connection
     else:
-        shortcut = conv_shortcut(name+'.Shortcut', input_dim=input_dim, output_dim=output_dim, filter_size=1,
+        shortcut = conv_shortcut(name+'.Shortcut', input_dim=input_dim, output_dim=output_dim, filter_size=filter_size,
                                  he_init=False, biases=True, inputs=inputs)
 
     output = inputs
     output = Normalize(name+'.BN1', [0,2,3], output)
     output = tf.nn.relu(output)
-    output = conv_1(name+'.Conv1', filter_size=1, inputs=output, he_init=he_init, biases=False)
+    output = conv_1(name+'.Conv1', filter_size=filter_size, inputs=output, he_init=he_init, biases=False)
     output = Normalize(name+'.BN2', [0,2,3], output)
     output = tf.nn.relu(output)
-    output = conv_2(name+'.Conv2', filter_size=1, inputs=output, he_init=he_init)
+    output = conv_2(name+'.Conv2', filter_size=filter_size, inputs=output, he_init=he_init)
 
     return shortcut + output
 
@@ -461,7 +461,9 @@ def DCGANDiscriminator(inputs, dim=DIM, bn=True, nonlinearity=LeakyReLU):
 
 Generator, Discriminator = GeneratorAndDiscriminator()
 
-with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as session:
+config=tf.ConfigProto(allow_soft_placement=True)
+config.gpu_options.allow_growth = True
+with tf.Session(config=config) as session:
 
     all_real_data_conv = tf.placeholder(tf.int32, shape=[BATCH_SIZE, 3, 64, 64])
     if tf.__version__.startswith('1.'):
@@ -506,11 +508,11 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as session:
                     disc_cost =  tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_fake,
                                                                                         labels=tf.zeros_like(disc_fake)))
                     disc_cost += tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=disc_real,
-                                                                                        labels=tf.ones_like(disc_real)))                    
+                                                                                        labels=tf.ones_like(disc_real)))
                 except Exception as e:
                     gen_cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(disc_fake, tf.ones_like(disc_fake)))
                     disc_cost =  tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(disc_fake, tf.zeros_like(disc_fake)))
-                    disc_cost += tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(disc_real, tf.ones_like(disc_real)))                    
+                    disc_cost += tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(disc_real, tf.ones_like(disc_real)))
                 disc_cost /= 2.
 
             elif MODE == 'lsgan':
@@ -572,7 +574,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as session:
     def generate_image(iteration):
         samples = session.run(all_fixed_noise_samples)
         samples = ((samples+1.)*(255.99/2)).astype('int32')
-        lib.save_images.save_images(samples.reshape((BATCH_SIZE, 3, 64, 64)), 'output/samples_{}.png'.format(iteration))
+        lib.save_images.save_images(samples.reshape((BATCH_SIZE, 3, 64, 64)), 'samples_{}.png'.format(iteration))
 
 
     # Dataset iterator
@@ -591,7 +593,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as session:
 
 
     # Train loop
-    session.run(tf.initialize_all_variables())
+    session.run(tf.global_variables_initializer())
     gen = inf_train_gen()
     for iteration in range(ITERS):
 
@@ -619,7 +621,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as session:
             t = time.time()
             dev_disc_costs = []
             for (images,) in dev_gen():
-                _dev_disc_cost = session.run(disc_cost, feed_dict={all_real_data_conv: images}) 
+                _dev_disc_cost = session.run(disc_cost, feed_dict={all_real_data_conv: images})
                 dev_disc_costs.append(_dev_disc_cost)
             lib.plot.plot('dev disc cost', np.mean(dev_disc_costs))
 
