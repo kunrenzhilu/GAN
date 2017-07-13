@@ -22,7 +22,7 @@ def make_generator(path, n_files, batch_size):
 
 def load(batch_size, data_dir='/home/ishaan/data/imagenet64'):
     return (
-        make_generator(data_dir+'/train_64x64/', 10000, batch_size),
+        make_generator(data_dir+'/train_64x64/', 49000, batch_size),
         make_generator(data_dir+'/valid_64x64/', 1000, batch_size)
     )
 

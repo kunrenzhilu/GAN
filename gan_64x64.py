@@ -574,7 +574,7 @@ with tf.Session(config=config) as session:
     def generate_image(iteration):
         samples = session.run(all_fixed_noise_samples)
         samples = ((samples+1.)*(255.99/2)).astype('int32')
-        lib.save_images.save_images(samples.reshape((BATCH_SIZE, 3, 64, 64)), 'samples_{}.png'.format(iteration))
+        lib.save_images.save_images(samples.reshape((BATCH_SIZE, 3, 64, 64)), 'samples_{}.png'.format(iteration), iteration)
 
 
     # Dataset iterator
@@ -626,6 +626,9 @@ with tf.Session(config=config) as session:
             lib.plot.plot('dev disc cost', np.mean(dev_disc_costs))
 
             generate_image(iteration)
+            if iteration % 20000 == 199:
+                for x in range(10):
+                    generate_image(iteration)
 
         if (iteration < 5) or (iteration % 200 == 199):
             lib.plot.flush()
