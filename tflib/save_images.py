@@ -33,7 +33,7 @@ def save_images(X, save_path, iteration=None):
     for n, x in enumerate(X):
         j = int(n/nw)
         i = n%nw
-        if iteration is not None and iteration % 19999 == 0:
+        if iteration is not None and iteration % 10000 == 9999:
             save_images.counter += 1
             imsave('output/' + '{}.png'.format(save_images.counter), x)
         img[j*h+j:j*h+h+j, i*w+i:i*w+w+i] = x

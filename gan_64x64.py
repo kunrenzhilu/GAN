@@ -562,16 +562,17 @@ with tf.Session(config=config) as session:
         raise Exception()
 
     # For generating samples
-    fixed_noise = tf.constant(np.random.normal(size=(BATCH_SIZE, 128)).astype('float32'))
-    all_fixed_noise_samples = []
-    for device_index, device in enumerate(DEVICES):
-        n_samples = int(BATCH_SIZE / len(DEVICES))
-        all_fixed_noise_samples.append(Generator(n_samples, noise=fixed_noise[device_index*n_samples:(device_index+1)*n_samples]))
-    if tf.__version__.startswith('1.'):
-        all_fixed_noise_samples = tf.concat(all_fixed_noise_samples, axis=0)
-    else:
-        all_fixed_noise_samples = tf.concat(0, all_fixed_noise_samples)
+
     def generate_image(iteration):
+        fixed_noise = tf.constant(np.random.normal(size=(BATCH_SIZE, 128)).astype('float32'))
+        all_fixed_noise_samples = []
+        for device_index, device in enumerate(DEVICES):
+            n_samples = int(BATCH_SIZE / len(DEVICES))
+            all_fixed_noise_samples.append(Generator(n_samples, noise=fixed_noise[device_index*n_samples:(device_index+1)*n_samples]))
+        if tf.__version__.startswith('1.'):
+            all_fixed_noise_samples = tf.concat(all_fixed_noise_samples, axis=0)
+        else:
+            all_fixed_noise_samples = tf.concat(0, all_fixed_noise_samples)
         samples = session.run(all_fixed_noise_samples)
         samples = ((samples+1.)*(255.99/2)).astype('int32')
         lib.save_images.save_images(samples.reshape((BATCH_SIZE, 3, 64, 64)), 'samples_{}.png'.format(iteration), iteration)
@@ -626,7 +627,7 @@ with tf.Session(config=config) as session:
             lib.plot.plot('dev disc cost', np.mean(dev_disc_costs))
 
             generate_image(iteration)
-            if iteration % 20000 == 199:
+            if iteration % 10000 == 9999:
                 for x in range(10):
                     generate_image(iteration)
 
