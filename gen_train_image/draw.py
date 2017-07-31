@@ -19,14 +19,19 @@ def check(x, y):
         return TRUE
 
 
-def draw_quadrant(n_quadrants, n_steps, n_images):
+def draw_quadrant(n_quadrants, n_steps, n_images, init_x = None, init_y = None):
     image_counter = 0
+    if init_x is None:
+        init_x = line_dis * random.randint(0, row_num)
+    if init_y is None:
+        init_y = line_dis * random.randint(0, row_num)
     while image_counter < n_images:
         moves = []
         rows = [[FALSE for x in range(row_num)] for y in range(row_num + 1)]
         cols = [[FALSE for x in range(row_num)] for y in range(row_num + 1)]
         quadrants = [FALSE for x in range(5)]
-        p0_x, p0_y = line_dis * random.randint(0, row_num), line_dis * random.randint(0, row_num)
+        # p0_x, p0_y = line_dis * random.randint(0, row_num), line_dis * random.randint(0, row_num)
+        p0_x, p0_y = init_x, init_y
         start_quadrant = get_quadrant((p0_x, p0_y))
         quadrants_count = 1
         quadrants[start_quadrant] = TRUE
@@ -69,13 +74,29 @@ def draw_quadrant(n_quadrants, n_steps, n_images):
             image_counter += 1
             im = Image.new("RGB", (64, 64), (255, 255, 255))
             draw = ImageDraw.Draw(im)
-            for x in range(0, 65, 8):
-                draw.line([x, 0, x, 64], rgb_blk)
-            for y in range(0, 65, 8):
-                draw.line([0, y, 64, y], rgb_blk)
+            # for x in range(0, 65, 8):
+            #     draw.line([x, 0, x, 64], rgb_blk)
+            # for y in range(0, 65, 8):
+            #     draw.line([0, y, 64, y], rgb_blk)
             for i in range(n_steps):
-                draw.line(moves[i], fill=rgb_red, width=bold_width)
-            im.save("images/" + str(image_counter) + ".png")
+                draw_line_dotted(draw, moves[i], fill=rgb_red, min_step=2, max_step=4)
+                # draw.line(moves[i], fill=rgb_red, width=bold_width)
+            im.save("images/" + '{:02d}{:02d}_{:d}'.format(init_x, init_y, image_counter) + ".png")
+
+
+def draw_line_dotted(draw, move, fill, min_step=None, max_step=None):
+    if min_step is None: min_step = 3
+    if max_step is None: max_step = 1
+    p0_x, p0_y = move[0], move[1]
+    p1_x, p1_y = move[2], move[3]
+    dir_x = 1 if p0_x < p1_x else -1
+    dir_y = 1 if p0_y < p1_y else -1
+    draw.point([p0_x, p0_y], fill=fill)
+    while dir_x * p0_x < dir_x * p1_x  or  dir_y * p0_y < dir_y * p1_y:
+        p0_x = abs(min(dir_x * (p0_x + dir_x * random.randint(min_step, max_step)), dir_x * p1_x))
+        p0_y = abs(min(dir_y * (p0_y + dir_y * random.randint(min_step, max_step)), dir_y * p1_y))
+        draw.point([random.randint(p0_x-1, p0_x+1), random.randint(p0_y-1, p0_y+1)], fill=fill)
+    draw.point([p1_x, p1_y], fill=fill)
 
 
 def check_quadrants(p, q_count, n_q, qs):
@@ -204,14 +225,14 @@ def draw_to_centre(image, init_x, init_y, index):
         draw_to_centre(a2, next2_x, next2_y, index)
 
 
-def distort():
+def distort(n):
     for fn in os.listdir("images/"):
-        for i in range(0, 10):
+        for i in range(0, n):
             im = Image.open("images/" + fn)
             if bool(random.getrandbits(1)):
                 x, y = random.randint(canvas_width / 4, canvas_width * 3 / 4), \
                        random.randint(canvas_height / 4, canvas_height * 3 / 4)
-                im = im.rotate(random.randint(-15, 15), resample=PIL.Image.BILINEAR, center=[x, y])
+                im = im.rotate(random.randint(-12, 12), resample=PIL.Image.NEAREST, center=[x, y])
             else:
                 data = np.array(im)
                 if bool(random.getrandbits(1)):
@@ -235,7 +256,7 @@ distort.counter = 0
 if __name__ == "__main__":
     master = Tk()
 
-    bold_width = 2
+    bold_width = 3
     bold_color = "#FF0000"
     rgb_red = (255, 0, 0)
     rgb_blk = (0, 0, 0)
@@ -262,4 +283,7 @@ if __name__ == "__main__":
         draw.line([start_point - start_point, y - start_point, canvas_width - start_point, y - start_point], rgb_blk)
 
     #generate()
-    draw_quadrant(2, 12, 50000)
+    draw_quadrant(2, 12, 5000, 0, 0)
+    distort(9)
+    # draw_quadrant(2, 12, 10000, 56, 56)
+    # draw_quadrant(2, 12, 10000, 8, 56)
