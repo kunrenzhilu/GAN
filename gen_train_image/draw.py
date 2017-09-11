@@ -85,8 +85,8 @@ def draw_quadrant(n_quadrants, n_steps, n_images, init_x = None, init_y = None):
 
 
 def draw_line_dotted(draw, move, fill, min_step=None, max_step=None):
-    if min_step is None: min_step = 3
-    if max_step is None: max_step = 1
+    if min_step is None: min_step = 1
+    if max_step is None: max_step = 3
     p0_x, p0_y = move[0], move[1]
     p1_x, p1_y = move[2], move[3]
     dir_x = 1 if p0_x < p1_x else -1
@@ -283,7 +283,6 @@ if __name__ == "__main__":
         draw.line([start_point - start_point, y - start_point, canvas_width - start_point, y - start_point], rgb_blk)
 
     #generate()
-    draw_quadrant(2, 12, 5000, 0, 0)
-    distort(9)
+    draw_quadrant(2, 12, 100, 0, 0)
     # draw_quadrant(2, 12, 10000, 56, 56)
     # draw_quadrant(2, 12, 10000, 8, 56)

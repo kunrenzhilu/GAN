@@ -29,7 +29,7 @@ DIM = 64 # Model dimensionality
 CRITIC_ITERS = 5 # How many iterations to train the critic for
 N_GPUS = 1 # Number of GPUs
 BATCH_SIZE = 64 # Batch size. Must be a multiple of N_GPUS
-ITERS = 20000 # How many iterations to train for
+ITERS = 5000 # How many iterations to train for
 LAMBDA = 10 # Gradient penalty lambda hyperparameter
 OUTPUT_DIM = 64*64*3 # Number of pixels in each image
 
@@ -627,7 +627,7 @@ with tf.Session(config=config) as session:
             lib.plot.plot('dev disc cost', np.mean(dev_disc_costs))
 
             generate_image(iteration)
-            if iteration % 10000 == 9999:
+            if iteration == 4999:
                 for x in range(10):
                     generate_image(iteration)
 
