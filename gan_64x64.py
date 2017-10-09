@@ -31,7 +31,7 @@ N_GPUS = 1 # Number of GPUs
 BATCH_SIZE = 64 # Batch size. Must be a multiple of N_GPUS
 ITERS = 5000 # How many iterations to train for
 LAMBDA = 10 # Gradient penalty lambda hyperparameter
-OUTPUT_DIM = 64*64*3 # Number of pixels in each image
+OUTPUT_DIM = 64*64*1 # Number of pixels in each image
 
 lib.print_model_settings(locals().copy())
 
@@ -212,7 +212,7 @@ def GoodGenerator(n_samples, noise=None, dim=DIM, nonlinearity=tf.nn.relu):
 
     output = Normalize('Generator.OutputN', [0,2,3], output)
     output = tf.nn.relu(output)
-    output = lib.ops.conv2d.Conv2D('Generator.Output', 1*dim, 3, 3, output)
+    output = lib.ops.conv2d.Conv2D('Generator.Output', 1*dim, 1, 3, output)
     output = tf.tanh(output)
 
     return tf.reshape(output, [-1, OUTPUT_DIM])
@@ -352,8 +352,8 @@ def MultiplicativeDCGANGenerator(n_samples, noise=None, dim=DIM, bn=True):
 # ! Discriminators
 
 def GoodDiscriminator(inputs, dim=DIM):
-    output = tf.reshape(inputs, [-1, 3, 64, 64])
-    output = lib.ops.conv2d.Conv2D('Discriminator.Input', 3, dim, 3, output, he_init=False)
+    output = tf.reshape(inputs, [-1, 1, 64, 64])
+    output = lib.ops.conv2d.Conv2D('Discriminator.Input', 1, dim, 3, output, he_init=False)
 
     output = ResidualBlock('Discriminator.Res1', dim, 2*dim, 3, output, resample='down')
     output = ResidualBlock('Discriminator.Res2', 2*dim, 4*dim, 3, output, resample='down')
@@ -465,7 +465,7 @@ config=tf.ConfigProto(allow_soft_placement=True)
 config.gpu_options.allow_growth = True
 with tf.Session(config=config) as session:
 
-    all_real_data_conv = tf.placeholder(tf.int32, shape=[BATCH_SIZE, 3, 64, 64])
+    all_real_data_conv = tf.placeholder(tf.int32, shape=[BATCH_SIZE, 1, 64, 64])
     if tf.__version__.startswith('1.'):
         split_real_data_conv = tf.split(all_real_data_conv, len(DEVICES))
     else:
@@ -575,7 +575,7 @@ with tf.Session(config=config) as session:
             all_fixed_noise_samples = tf.concat(0, all_fixed_noise_samples)
         samples = session.run(all_fixed_noise_samples)
         samples = ((samples+1.)*(255.99/2)).astype('int32')
-        lib.save_images.save_images(samples.reshape((BATCH_SIZE, 3, 64, 64)), 'samples_{}.png'.format(iteration), iteration)
+        lib.save_images.save_images(samples.reshape((BATCH_SIZE, 1, 64, 64)), 'samples_{}.png'.format(iteration), iteration)
 
 
     # Dataset iterator
@@ -590,7 +590,7 @@ with tf.Session(config=config) as session:
     _x = next(inf_train_gen())
     _x_r = session.run(real_data, feed_dict={real_data_conv: _x[:int(BATCH_SIZE/N_GPUS)]})
     _x_r = ((_x_r+1.)*(255.99/2)).astype('int32')
-    lib.save_images.save_images(_x_r.reshape((int(BATCH_SIZE/N_GPUS), 3, 64, 64)), 'samples_groundtruth.png')
+    lib.save_images.save_images(_x_r.reshape((int(BATCH_SIZE/N_GPUS), 1, 64, 64)), 'samples_groundtruth.png')
 
 
     # Train loop
